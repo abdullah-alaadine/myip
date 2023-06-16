@@ -3,5 +3,5 @@
 # This file is generated during the build process and should only exist in the local environment.
 rss-aggregator.exe
 
-
 .env
+/vendor
