@@ -108,3 +108,29 @@ func getPublicIP(client *http.Client) (string, error) {
 
 	return string(data), nil
 }
+
+func getPublicIPRich(client *http.Client) (*result, error) {
+	resp, err := client.Get(endpoint + "ip")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP request failed with status code: %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &result{}
+
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
