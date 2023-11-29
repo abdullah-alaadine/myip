@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -27,7 +28,7 @@ type result struct {
 
 func main() {
 	inJSON := flag.Bool("json", false, "display results in JSON format")
-	// rich := flag.Bool("rich", false, "display results in rich JSON format | more information")
+	rich := flag.Bool("rich", false, "display results in rich JSON format | more information")
 	flag.Parse()
 
 	var IPs struct {
@@ -41,16 +42,27 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
+	var res *result
+
 	wg.Add(1)
-	go func(httpClient *http.Client) {
+	go func(httpClient *http.Client, rich bool) {
 		defer wg.Done()
-		publicIP, err := getPublicIP(httpClient)
+		if !rich {
+			publicIP, err := getPublicIP(httpClient)
+			if err != nil {
+				log.Println("Failed to retrieve public IP:", err)
+				return
+			}
+			IPs.PublicIP = publicIP
+			return
+		}
+		var err error
+		res, err = getPublicIPRich(httpClient)
 		if err != nil {
 			log.Println("Failed to retrieve public IP:", err)
 			return
 		}
-		IPs.PublicIP = publicIP
-	}(httpClient)
+	}(httpClient, *rich)
 
 	wg.Add(1)
 	go func() {
@@ -67,10 +79,34 @@ func main() {
 
 	fmt.Println()
 	if *inJSON {
-		err := json.NewEncoder(os.Stdout).Encode(IPs)
-		if err != nil {
-			log.Println("Error encoding IPs: ", err)
+		if !*rich {
+			err := json.NewEncoder(os.Stdout).Encode(IPs)
+			if err != nil {
+				log.Fatal("failed to encode IPs to JSON:", err)
+			}
+			return
 		}
+		err := json.NewEncoder(os.Stdout).Encode(struct {
+			PublicIP  string `json:"public IP"`
+			PrivateIP string `json:"private IP"`
+			Info      result `json:"info"`
+		}{
+			PrivateIP: IPs.PrivateIP,
+			PublicIP:  res.IpAddress,
+			Info:      *res,
+		})
+		if err != nil {
+			log.Fatal("failed to encode data to JSON:", err)
+		}
+		return
+	}
+
+	if *rich {
+		v := reflect.ValueOf(*res)
+		for i := 0; i < v.NumField(); i++ {
+			fmt.Printf("%-11s: %s\n", v.Field(i).String(), v.Field(i).Interface())
+		}
+		fmt.Printf("%-11s: %s\n", "private IP", IPs.PrivateIP)
 		return
 	}
 
