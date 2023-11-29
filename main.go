@@ -30,24 +30,24 @@ func main() {
 
 	wg.Add(1)
 	go func(httpClient *http.Client) {
+		defer wg.Done()
 		publicIP, err := getPublicIP(httpClient)
 		if err != nil {
 			log.Println("Failed to retrieve public IP:", err)
 			return
 		}
 		IPs.PublicIP = publicIP
-		wg.Done()
 	}(httpClient)
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		privateIP, err := getPrivateIP()
 		if err != nil {
 			log.Println("Failed to retrieve private IP:", err)
 			return
 		}
 		IPs.PrivateIP = privateIP
-		wg.Done()
 	}()
 
 	wg.Wait()
