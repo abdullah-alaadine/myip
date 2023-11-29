@@ -2,19 +2,24 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
 
 func main() {
+	inJSON := flag.Bool("json", false, "display results in JSON format")
+	flag.Parse()
+
 	var IPs struct {
-		PublicIP  string
-		PrivateIP string
+		PublicIP  string `json:"publicIP"`
+		PrivateIP string `json:"privateIP"`
 	}
 
 	httpClient := &http.Client{
@@ -46,6 +51,18 @@ func main() {
 	}()
 
 	wg.Wait()
+
+	fmt.Println()
+	if *inJSON {
+		err := json.NewEncoder(os.Stdout).Encode(IPs)
+		if err != nil {
+			log.Println("Error encoding IPs: ", err)
+		}
+		return
+	}
+
+	fmt.Printf("%-11s: %s\n", "public IP", IPs.PublicIP)
+	fmt.Printf("%-11s: %s\n", "private IP", IPs.PrivateIP)
 }
 
 func getPrivateIP() (string, error) {
