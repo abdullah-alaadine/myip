@@ -104,10 +104,10 @@ func main() {
 
 	if *rich {
 		v := reflect.ValueOf(*res)
+		fmt.Printf("%-11s: %s\n", "private IP", IPs.PrivateIP)
 		for i := 0; i < v.NumField(); i++ {
 			fmt.Printf("%-11s: %s\n", v.Type().Field(i).Name, v.Field(i).Interface())
 		}
-		fmt.Printf("%-11s: %s\n", "private IP", IPs.PrivateIP)
 		return
 	}
 
