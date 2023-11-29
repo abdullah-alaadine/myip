@@ -86,7 +86,7 @@ func main() {
 			}
 			return
 		}
-		err := json.NewEncoder(os.Stdout).Encode(struct {
+		data, err := json.MarshalIndent(struct {
 			PublicIP  string `json:"public IP"`
 			PrivateIP string `json:"private IP"`
 			Info      result `json:"info"`
@@ -94,17 +94,18 @@ func main() {
 			PrivateIP: IPs.PrivateIP,
 			PublicIP:  res.IpAddress,
 			Info:      *res,
-		})
+		}, "", "    ")
 		if err != nil {
 			log.Fatal("failed to encode data to JSON:", err)
 		}
+		fmt.Println(string(data))
 		return
 	}
 
 	if *rich {
 		v := reflect.ValueOf(*res)
 		for i := 0; i < v.NumField(); i++ {
-			fmt.Printf("%-11s: %s\n", v.Field(i).String(), v.Field(i).Interface())
+			fmt.Printf("%-11s: %s\n", v.Type().Field(i).Name, v.Field(i).Interface())
 		}
 		fmt.Printf("%-11s: %s\n", "private IP", IPs.PrivateIP)
 		return
@@ -146,7 +147,7 @@ func getPublicIP(client *http.Client) (string, error) {
 }
 
 func getPublicIPRich(client *http.Client) (*result, error) {
-	resp, err := client.Get(endpoint + "ip")
+	resp, err := client.Get(endpoint)
 	if err != nil {
 		return nil, err
 	}
