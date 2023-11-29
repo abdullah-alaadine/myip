@@ -15,6 +15,7 @@ import (
 
 func main() {
 	inJSON := flag.Bool("json", false, "display results in JSON format")
+	rich := flag.Bool("rich", false, "display results in rich JSON format | more information")
 	flag.Parse()
 
 	var IPs struct {
@@ -29,15 +30,15 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
-	go func(httpClient *http.Client) {
+	go func(httpClient *http.Client, rich bool) {
 		defer wg.Done()
-		publicIP, err := getPublicIP(httpClient)
+		publicIP, err := getPublicIP(httpClient, rich)
 		if err != nil {
 			log.Println("Failed to retrieve public IP:", err)
 			return
 		}
 		IPs.PublicIP = publicIP
-	}(httpClient)
+	}(httpClient, *rich)
 
 	wg.Add(1)
 	go func() {
@@ -77,8 +78,12 @@ func getPrivateIP() (string, error) {
 	return localAddr.IP.String(), nil
 }
 
-func getPublicIP(client *http.Client) (string, error) {
-	resp, err := client.Get("https://ifconfig.me/all.json")
+func getPublicIP(client *http.Client, rich bool) (string, error) {
+	endpoint := "https://ipinfo.io"
+	if !rich {
+		endpoint += "/ip"
+	}
+	resp, err := client.Get(endpoint)
 	if err != nil {
 		return "", err
 	}
@@ -93,8 +98,18 @@ func getPublicIP(client *http.Client) (string, error) {
 		return "", err
 	}
 
+	if !rich {
+		return string(data), nil
+	}
+
 	var result struct {
-		IpAddress string `json:"ip_addr"`
+		IpAddress string `json:"ip"`
+		Country   string `json:"country,omitempty"`
+		City      string `json:"city,omitempty"`
+		Region    string `json:"region,omitempty"`
+		Location  string `json:"loc,omitempty"`
+		Origin    string `json:"org,omitempty"`
+		HostName  string `json:"hostname,omitempty"`
 	}
 
 	err = json.Unmarshal(data, &result)
