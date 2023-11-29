@@ -17,13 +17,13 @@ import (
 var endpoint string = "https://ipinfo.io/"
 
 type result struct {
-	IpAddress string `json:"ip"`
-	Country   string `json:"country,omitempty"`
-	City      string `json:"city,omitempty"`
-	Region    string `json:"region,omitempty"`
-	Location  string `json:"loc,omitempty"`
-	Origin    string `json:"org,omitempty"`
-	HostName  string `json:"hostname,omitempty"`
+	IpAddress    string `json:"ip"`
+	Country      string `json:"country,omitempty"`
+	City         string `json:"city,omitempty"`
+	Region       string `json:"region,omitempty"`
+	Location     string `json:"loc,omitempty"`
+	HostName     string `json:"hostname,omitempty"`
+	Organization string `json:"org,omitempty"`
 }
 
 func main() {
