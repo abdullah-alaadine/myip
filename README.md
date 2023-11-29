@@ -2,6 +2,8 @@
 
 MyIP is a small Go application that retrieves information about your public and private IP addresses. It provides the data in either plain text or JSON format.
 
+![MyIP](./myip.gif)
+
 ### Usage
 
 #### Flags
